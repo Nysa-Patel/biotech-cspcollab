@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioMonitor™️</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e14;
+    --panel: #111720;
+    --border: #1e2d3d;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --warn: #ffcc00;
+    --ok: #00e676;
+    --text: #cdd9e5;
+    --muted: #546e7a;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+  header h1 {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  header span {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 640px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  select, input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 9px 12px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+
+  .btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 11px 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-stop {
+    background: transparent;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    margin-top: 8px;
+  }
+
+  #dashboard { display: none; }
+
+  .temp-display {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin: 8px 0 20px;
+  }
+  .temp-number {
+    font-family: var(--mono);
+    font-size: 3.5rem;
+    font-weight: 600;
+    line-height: 1;
+    transition: color 0.4s;
+  }
+  .temp-unit {
+    font-family: var(--mono);
+    font-size: 1.2rem;
+    color: var(--muted);
+    padding-bottom: 8px;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .status-badge .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .status-ok    { color: var(--ok);    border-color: var(--ok);    }
+  .status-heat  { color: var(--accent2); border-color: var(--accent2); }
+  .status-cool  { color: var(--accent); border-color: var(--accent); }
+  .status-ok   .dot { background: var(--ok); }
+  .status-heat .dot { background: var(--accent2); }
+  .status-cool .dot { background: var(--accent); }
+
+  .range-info {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .range-stat { font-family: var(--mono); font-size: 0.78rem; }
+  .range-stat .val { color: var(--accent); font-size: 1rem; display: block; margin-top: 2px; }
+
+  .log-area {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    height: 160px;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 0.73rem;
+    line-height: 1.7;
+  }
+  .log-area::-webkit-scrollbar { width: 4px; }
+  .log-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-entry { display: flex; gap: 10px; }
+  .log-time  { color: var(--muted); flex-shrink: 0; }
+  .log-ok   { color: var(--ok); }
+  .log-heat { color: var(--accent2); }
+  .log-cool { color: var(--accent); }
+  .log-sys  { color: var(--warn); }
+
+  .meta-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .meta-chip {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+  }
+  .meta-chip span { color: var(--text); }
+
+  .next-read {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 12px;
+    text-align: right;
+  }
+  .next-read span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BioMonitor™️</h1>
+  <span>v1.0 · substance temp controller</span>
+</header>
+
+<div class="card" id="setup-card">
+  <div class="card-label">Initialization</div>
+  <div class="form-row">
+    <div class="field">
+      <label>Physical State</label>
+      <select id="state">
+        <option value="solid">Solid</option>
+        <option value="liquid">Liquid</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Substance Type</label>
+      <select id="substanceType">
+        <option value="vaccine">Vaccine</option>
+        <option value="blood_sample">Blood Sample</option>
+        <option value="blood_transfusion">Blood Transfusion</option>
+        <option value="antibiotics_or_medication">Antibiotics / Medication</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn" id="startBtn" onclick="startMonitor()">Start Monitoring</button>
+</div>
+
+<div class="card" id="dashboard">
+  <div class="card-label">Live Monitor</div>
+  <div class="meta-row">
+    <div class="meta-chip">State: <span id="d-state">—</span></div>
+    <div class="meta-chip">Type: <span id="d-type">—</span></div>
+    <div class="meta-chip">Range: <span id="d-range">—</span></div>
+  </div>
+  <div class="temp-display">
+    <div class="temp-number" id="tempNum">--</div>
+    <div class="temp-unit">°C</div>
+  </div>
+  <div id="statusBadge" class="status-badge status-ok">
+    <div class="dot"></div>
+    <span id="statusText">Waiting for initial read</span>
+  </div>
+  <div class="range-info">
+    <div class="range-stat">Min<span class="val" id="d-min">—</span></div>
+    <div class="range-stat">Max<span class="val" id="d-max">—</span></div>
+    <div class="range-stat">Readings<span class="val" id="d-count">0</span></div>
+  </div>
+  <div class="next-read" id="nextRead">Next read in <span id="countdown">30</span>s</div>
+</div>
+
+<div class="card" id="log-card" style="display:none;">
+  <div class="card-label">System Log</div>
+  <div class="log-area" id="logArea"></div>
+  <button class="btn btn-stop" onclick="stopMonitor()">■ Stop Monitoring</button>
+</div>
+
+<script>
+  const tempmodels = {
+    vaccine:                 { min: 2,  max: 8  },
+    blood_sample:            { min: 4,  max: 8  },
+    blood_transfusion:       { min: 1,  max: 10 },
+    antibiotics_or_medication: { min: 15, max: 25 }
+  };
+
+  let intervalId = null;
+  let countdownId = null;
+  let readCount = 0;
+  let countdownVal = 30;
+
+  function getTempFromSD() {
+    return Math.floor(Math.random() * 30);
+  }
+
+  function addLog(msg, cls = 'log-ok') {
+    const area = document.getElementById('logArea');
+    const now = new Date();
+    const ts = now.toTimeString().slice(0,8);
+    area.innerHTML += `<div class="log-entry"><span class="log-time">${ts}</span><span class="${cls}">${msg}</span></div>`;
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function checkTemp(temp, model) {
+    const badge = document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    badge.className = 'status-badge';
+
+    if (temp < model.min) {
+      badge.classList.add('status-heat');
+      statusText.textContent = 'Heating System Active';
+      addLog(`⚠ TEMP LOW (${temp}°C) — activating heater`, 'log-heat');
+    } else if (temp > model.max) {
+      badge.classList.add('status-cool');
+      statusText.textContent = 'Cooling System Active';
+      addLog(`⚠ TEMP HIGH (${temp}°C) — activating cooler`, 'log-cool');
+    } else {
+      badge.classList.add('status-ok');
+      statusText.textContent = 'Temperature Stable';
+      addLog(`✓ Stable temp: ${temp}°C`, 'log-ok');
+    }
+  }
+
+  function doRead(model) {
+    const temp = getTempFromSD();
+    readCount++;
+    document.getElementById('tempNum').textContent = temp;
+    document.getElementById('d-count').textContent = readCount;
+
+    const color = temp < model.min ? 'var(--accent2)' : temp > model.max ? 'var(--accent)' : 'var(--ok)';
+    document.getElementById('tempNum').style.color = color;
+
+    checkTemp(temp, model);
+    resetCountdown();
+  }
+
+  function resetCountdown() {
+    countdownVal = 30;
+    document.getElementById('countdown').textContent = countdownVal;
+  }
+
+  function startMonitor() {
+    const state = document.getElementById('state').value;
+    const substanceType = document.getElementById('substanceType').value;
+    const model = tempmodels[substanceType];
+    const label = document.getElementById('substanceType').options[document.getElementById('substanceType').selectedIndex].text;
+
+    document.getElementById('d-state').textContent = state;
+    document.getElementById('d-type').textContent = label;
+    document.getElementById('d-range').textContent = `${model.min}–${model.max}°C`;
+    document.getElementById('d-min').textContent = model.min + '°C';
+    document.getElementById('d-max').textContent = model.max + '°C';
+
+    document.getElementById('setup-card').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('log-card').style.display = 'block';
+
+    addLog(`System started · ${label} · ${state} · range ${model.min}–${model.max}°C`, 'log-sys');
+
+    doRead(model);
+    intervalId = setInterval(() => doRead(model), 30000);
+
+    countdownId = setInterval(() => {
+      countdownVal--;
+      if (countdownVal < 0) countdownVal = 30;
+      document.getElementById('countdown').textContent = countdownVal;
+    }, 1000);
+  }
+
+  function stopMonitor() {
+    clearInterval(intervalId);
+    clearInterval(countdownId);
+    addLog('— Monitoring stopped by user —', 'log-sys');
+    document.getElementById('nextRead').style.display = 'none';
+    document.querySelector('.btn-stop').disabled = true;
+    document.querySelector('.btn-stop').textContent = '■ Stopped';
+  }
+</script>
+</body>
+</html>
